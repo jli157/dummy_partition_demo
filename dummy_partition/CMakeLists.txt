@@ -54,3 +54,9 @@ target_compile_definitions(tfm_partition_defs
     INTERFACE
         TFM_PARTITION_DUMMY_PARTITION
 )
+
+target_compile_definitions(tfm_partition_defs
+    INTERFACE
+        TFM_PARTITION_DUMMY_PARTITION
+        $<$<BOOL:${TFM_PERIPHERAL_TIMER0_SECURE}>:TFM_PERIPHERAL_TIMER0_SECURE>
+)

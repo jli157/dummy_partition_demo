@@ -28,6 +28,20 @@
    }
   ],
 
+  "mmio_regions": [
+    {
+      "name": "TFM_PERIPHERAL_TIMER0",
+      "permission": "READ-WRITE"
+    }
+  ],
+  "irqs": [
+    {
+      "source": "TFM_TIMER0_IRQ",
+      "name": "TFM_TIMER0_IRQ",
+      "handling": "SLIH",
+    }
+  ],
+
   "dependencies": [
     "TFM_CRYPTO"
   ]
