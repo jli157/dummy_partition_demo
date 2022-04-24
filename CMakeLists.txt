@@ -29,6 +29,7 @@ target_sources(app PRIVATE
 
 target_include_directories(app PRIVATE
   $<TARGET_PROPERTY:tfm,TFM_BINARY_DIR>/install/interface/include
+  dummy_partition
 )
 
 target_compile_definitions(app

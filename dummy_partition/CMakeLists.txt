@@ -11,6 +11,7 @@ target_include_directories(tfm_app_rot_partition_dp
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     PRIVATE
         ${CMAKE_BINARY_DIR}/dummy_partition
+	dummpy_partition
 )
 target_include_directories(tfm_partitions
     INTERFACE

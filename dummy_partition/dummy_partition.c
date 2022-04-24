@@ -10,6 +10,7 @@
 #include "tfm_secure_api.h"
 #include "tfm_api.h"
 #include "tfm_sp_log.h"
+#include "dummy_partition_defs.h"
 
 #define NUM_SECRETS 5
 
@@ -18,19 +19,19 @@ struct dp_secret {
 };
 
 struct dp_secret secrets[NUM_SECRETS] = {
-	{ {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} },
-	{ {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} },
-	{ {2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} },
-	{ {3, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} },
-	{ {4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} },
+	{ { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } },
+	{ { 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } },
+	{ { 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } },
+	{ { 3, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } },
+	{ { 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } },
 };
 
 typedef void (*psa_write_callback_t)(void *handle, uint8_t *digest,
 				     uint32_t digest_size);
 
 static psa_status_t tfm_dp_secret_digest(uint32_t secret_index,
-			size_t digest_size, size_t *p_digest_size,
-			psa_write_callback_t callback, void *handle)
+					 size_t digest_size, size_t *p_digest_size,
+					 psa_write_callback_t callback, void *handle)
 {
 	uint8_t digest[32];
 	psa_status_t status;
@@ -46,8 +47,8 @@ static psa_status_t tfm_dp_secret_digest(uint32_t secret_index,
 	}
 
 	status = psa_hash_compute(PSA_ALG_SHA_256, secrets[secret_index].secret,
-				sizeof(secrets[secret_index].secret), digest,
-				digest_size, p_digest_size);
+				  sizeof(secrets[secret_index].secret), digest,
+				  digest_size, p_digest_size);
 
 	if (status != PSA_SUCCESS) {
 		return status;
@@ -93,22 +94,16 @@ static psa_status_t tfm_dp_secret_digest_ipc(psa_msg_t *msg)
 }
 
 
-static void dp_signal_handle(psa_signal_t signal, dp_func_t pfn)
+static void dp_signal_handle(psa_signal_t signal)
 {
 	psa_status_t status;
 	psa_msg_t msg;
 
 	status = psa_get(signal, &msg);
 	switch (msg.type) {
-	case PSA_IPC_CONNECT:
-		psa_reply(msg.handle, PSA_SUCCESS);
-		break;
-	case PSA_IPC_CALL:
-		status = pfn(&msg);
+	case TFM_DP_SECRET_DIGEST:
+		status = tfm_dp_secret_digest_ipc(&msg);
 		psa_reply(msg.handle, status);
-		break;
-	case PSA_IPC_DISCONNECT:
-		psa_reply(msg.handle, PSA_SUCCESS);
 		break;
 	default:
 		psa_panic();
@@ -123,9 +118,8 @@ psa_status_t tfm_dp_req_mngr_init(void)
 	while (1) {
 		signals = psa_wait(PSA_WAIT_ANY, PSA_BLOCK);
 		LOG_INFFMT("signal: %d\r\n", signals);
-		if (signals & TFM_DP_SECRET_DIGEST_SIGNAL) {
-			dp_signal_handle(TFM_DP_SECRET_DIGEST_SIGNAL,
-					 tfm_dp_secret_digest_ipc);
+		if (signals & TFM_DP_SERVICE_SIGNAL) {
+			dp_signal_handle(TFM_DP_SERVICE_SIGNAL);
 		} else {
 			psa_panic();
 		}
