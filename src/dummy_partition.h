@@ -9,3 +9,5 @@
 psa_status_t dp_secret_digest(uint32_t secret_index,
 			      void *p_digest,
 			      size_t digest_size);
+
+psa_status_t dp_start_timer_test(void);

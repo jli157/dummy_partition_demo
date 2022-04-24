@@ -7,12 +7,14 @@
 #include <zephyr.h>
 #include <tfm_veneers.h>
 #include <tfm_ns_interface.h>
-
+#include <sys/printk.h>
 #include "dummy_partition.h"
 
 void main(void)
 {
 	uint8_t digest[32];
+
+	printk("Test digests...\n");
 
 	for (int key = 0; key < 6; key++) {
 		psa_status_t status = dp_secret_digest(key, digest, sizeof(digest));
@@ -27,4 +29,8 @@ void main(void)
 			printk("\n");
 		}
 	}
+
+	printk("Test timer...\n");
+	dp_start_timer_test();
+
 }

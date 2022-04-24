@@ -29,3 +29,10 @@ psa_status_t dp_secret_digest(uint32_t secret_index,
 
 	return status;
 }
+
+psa_status_t dp_start_timer_test(void)
+{
+	return psa_call(TFM_DP_SERVICE_HANDLE, TFM_DP_TIMER_TEST,
+			NULL, 0, NULL, 0);
+
+}

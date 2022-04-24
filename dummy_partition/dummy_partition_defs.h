@@ -16,6 +16,8 @@ extern "C" {
 #define TFM_DP_INVALID_UID 0
 
 #define TFM_DP_SECRET_DIGEST                1001
+#define TFM_DP_FETCH_RESP                   1002
+#define TFM_DP_TIMER_TEST                   1003
 
 #ifdef __cplusplus
 }

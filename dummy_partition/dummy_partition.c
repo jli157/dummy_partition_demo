@@ -11,6 +11,7 @@
 #include "tfm_api.h"
 #include "tfm_sp_log.h"
 #include "dummy_partition_defs.h"
+#include "tfm_plat_test.h"
 
 #define NUM_SECRETS 5
 
@@ -78,6 +79,7 @@ static psa_status_t tfm_dp_secret_digest_ipc(psa_msg_t *msg)
 	size_t num = 0;
 	uint32_t secret_index;
 
+	LOG_INFFMT("Generate secret_digest...\r\n");
 	if (msg->in_size[0] != sizeof(secret_index)) {
 		/* The size of the argument is incorrect */
 		return PSA_ERROR_PROGRAMMER_ERROR;
@@ -93,6 +95,32 @@ static psa_status_t tfm_dp_secret_digest_ipc(psa_msg_t *msg)
 				    (void *)msg->handle);
 }
 
+static psa_status_t tfm_dp_timer_cb_ipc(void)
+{
+
+	LOG_INFFMT("Timer0 timeout...\r\n");
+	tfm_plat_test_secure_timer_stop();
+	psa_irq_disable(TFM_TIMER0_IRQ_SIGNAL);
+	psa_eoi(TFM_TIMER0_IRQ_SIGNAL);
+
+#if 0
+	psa_signal_t signals = 0;
+	signals = psa_wait(PSA_WAIT_ANY, PSA_BLOCK);
+	if (signals & TFM_DP_FETCH_RESP_SIGNAL) {
+	}
+#endif
+	return PSA_SUCCESS;
+}
+
+static psa_status_t tfm_dp_timer_test_ipc(psa_msg_t *msg)
+{
+	LOG_INFFMT("Start timer ...\r\n");
+	psa_irq_enable(TFM_TIMER0_IRQ_SIGNAL);
+	tfm_plat_test_secure_timer_start();
+
+	return PSA_SUCCESS;
+}
+
 
 static void dp_signal_handle(psa_signal_t signal)
 {
@@ -103,6 +131,10 @@ static void dp_signal_handle(psa_signal_t signal)
 	switch (msg.type) {
 	case TFM_DP_SECRET_DIGEST:
 		status = tfm_dp_secret_digest_ipc(&msg);
+		psa_reply(msg.handle, status);
+		break;
+	case TFM_DP_TIMER_TEST:
+		status = tfm_dp_timer_test_ipc(&msg);
 		psa_reply(msg.handle, status);
 		break;
 	default:
@@ -117,9 +149,11 @@ psa_status_t tfm_dp_req_mngr_init(void)
 	LOG_INFFMT("tfm_dp_req_mngr_init...\r\n");
 	while (1) {
 		signals = psa_wait(PSA_WAIT_ANY, PSA_BLOCK);
-		LOG_INFFMT("signal: %d\r\n", signals);
 		if (signals & TFM_DP_SERVICE_SIGNAL) {
 			dp_signal_handle(TFM_DP_SERVICE_SIGNAL);
+
+		} else if (signals & TFM_TIMER0_IRQ_SIGNAL) {
+			tfm_dp_timer_cb_ipc();
 		} else {
 			psa_panic();
 		}
